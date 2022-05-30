@@ -1,0 +1,107 @@
+version: '3.3'
+
+services:
+  api:
+    build: 
+      context: .
+      dockerfile: devops/Dockerfile
+    command: daphne -p 8000 config.asgi:application
+    ports:
+    - 8000:8000
+    # - 8001:8001
+    expose:
+      - 8000
+      # - 8001
+    volumes:
+        - .:/app
+    depends_on:
+      # - mqttt
+      - redis
+      - db
+    restart: "on-failure"
+    networks:
+        - iot_system
+    links:
+      - db:db
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      # - MQTT_HOST=mqtt
+      - REDIS_HOST=redis
+    
+
+  db:
+    image: postgres
+    container_name: db
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_NAME=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+        - iot_system
+
+  # worker:
+  #   build:
+  #     context: .
+  #     dockerfile: devops/Dockerfile
+  #   environment: 
+  #     - MQTT_HOST=mqtt
+  #     - REDIS_HOST=redis
+  #   depends_on:
+  #     # - mqtt
+  #     - redis
+    
+  #   command: python3 manage.py runworker mqtt
+    # restart: always
+    
+  web_api:
+    build:
+      context: .
+      dockerfile: devops/Dockerfile
+    environment:
+      - MQTT_HOST=mqtt
+      - REDIS_HOST=redis
+    command: python3 manage.py runserver 0.0.0.0:8001 && python3 manage.py runworker mqtt
+    ports:
+      - "8001:8001"
+    depends_on:
+      # - mqtt
+      - redis
+    volumes:
+      - .:/app
+  
+    
+
+  mqtt:
+    container_name: mqtt
+    image: eclipse-mosquitto
+    
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+
+    expose:
+      - "1883"
+      - "9001"
+    # command: python manage.py runworker mqtt
+    
+    networks:
+        - iot_system
+    restart: always
+
+  redis:
+    image: redis:5
+    ports:
+      - "6379:6379"
+  
+networks:
+    iot_system:
+      driver: bridge
+

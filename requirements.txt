@@ -1,0 +1,11 @@
+Django==3.0.7
+djangorestframework
+djangorestframework-simplejwt==5.0.0
+drf-yasg==1.20.0
+chanmqttproxy==0.1
+channels==3.0.4
+channels-redis==3.3.1
+twisted[http2]
+django-cors-headers
+psycopg2-binary
+daphne
