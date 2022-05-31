@@ -34,6 +34,9 @@ services:
   db:
     image: postgres
     container_name: db
+    restart: always
+    ports:
+      - 5432:5432
     volumes:
       - ./data/db:/var/lib/postgresql/data
     environment:
@@ -64,7 +67,7 @@ services:
     environment:
       - MQTT_HOST=mqtt
       - REDIS_HOST=redis
-    command: python3 manage.py runserver 0.0.0.0:8001 && python3 manage.py runworker mqtt
+    command: bash -c "python3 manage.py runserver 0.0.0.0:8001 && python3 manage.py runworker mqtt"
     ports:
       - "8001:8001"
     depends_on:
